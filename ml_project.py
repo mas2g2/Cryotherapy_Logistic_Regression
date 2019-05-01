@@ -10,15 +10,13 @@ data = np.array(data)
 data = data[1:,:]
 DATA = data.astype(float)
 
-
 # Building model
 
 
 f = open("theta.txt","r")
-theta_init = f.read()
-print(theta_init)
-theta_init = ast.literal_eval(theta_init)
-theta_init = np.array(theta_init)
+theta = f.read()
+theta= ast.literal_eval(theta)
+theta = np.array(theta)
 
 
 # Sigmoid function
@@ -42,11 +40,11 @@ def grad_desc(theta,x,y):
 
 
 def train(theta,x,y,iterations,learning_rate):
+    print("Training model ...");
     cost_history = []
     for i in range(iterations):
         theta -= learning_rate*grad_desc(theta,x,y)
         err = cost(theta,x,y)
-        print("Cost: ",err)
         cost_history.append(err)
     cost_history = np.array(cost_history)
     return theta,cost_history
@@ -64,7 +62,7 @@ def score(theta,x,y):
             error_count += 1
     return 1-float(error_count/len(y))
 
-theta = theta_init[:6]
+
 iterations = 20000
 training_x = DATA[:75,:6]
 training_y = DATA[:75,6]
@@ -77,7 +75,8 @@ for i in range(iterations):
 plt.title("Cost function")
 plt.plot(x,cost_history)
 plt.show()
-print(score(theta,testing_x,testing_y))
+print("Testing Accuracy: ",score(theta,testing_x,testing_y))
+print("Training Accuracy: ",score(theta,training_x,training_y))
 zero = np.zeros((5,1))
 one = np.zeros((10,1))
 zero_i = 0
@@ -97,4 +96,22 @@ plt.axhline(y=0.5,color="r",linestyle='-')
 plt.scatter(plot_x[:5],zero)
 plt.scatter(plot_x[5:],one)
 plt.show()
-
+zero_i = 0
+one_i = 0
+zero = np.zeros((37,1))
+one = np.zeros((38,1))
+plot_x = np.zeros((75,1))
+for i in range(len(training_x)):
+    if training_y[i] == 0:
+        zero[zero_i] = sigmoid(g_x(theta,training_x[i,:]))
+        zero_i +=1
+    else:
+        one[one_i] = sigmoid(g_x(theta,training_x[i,:]))
+        one_i +=1
+for i in range(len(training_x)):
+    plot_x[i] = i+1
+plt.title("Training Samples")
+plt.axhline(y=0.5,color='g',linestyle='-')
+plt.scatter(plot_x[:37],zero)
+plt.scatter(plot_x[37:],one)
+plt.show()
