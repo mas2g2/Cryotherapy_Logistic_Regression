@@ -25,7 +25,7 @@ def sigmoid(x):
 
 # Caculates g(x)
 def g_x(theta,x):
-    return np.dot(x,theta)
+    return np.dot(x,theta.transpose())
 
 
 def cost(theta,x,y):
@@ -48,12 +48,19 @@ def train(theta,x,y,iterations,learning_rate):
         err = cost(theta,x,y)
         theta_history.append(theta)
         cost_history.append(err)
+        print(err)
     cost_history = np.array(cost_history)
     return theta,cost_history
 
 def score(theta,x,y):
     error_count = 0
     pred_y = sigmoid(g_x(theta,x))
+    positives = 0
+    true_pos = 0
+    true_neg =0
+    negatives = 0
+    false_pos = 0
+    false_neg = 0
     for i in range(len(pred_y)):
         if pred_y[i] < 0.5:
             pred_y[i] = 0
@@ -62,12 +69,70 @@ def score(theta,x,y):
         
         if pred_y[i] != y[i]:
             error_count += 1
-    return 1-float(error_count/len(y))
+        if y[i] == 1:
+            positives += 1
+        if y[i] == 0:
+            negatives += 1
+        if y[i] == 1 and pred_y[i] == 1:
+            true_pos += 1
+        elif y[i] == 1 and pred_y[i] == 0:
+            false_neg += 1
+        if y[i] == 0 and pred_y[i] == 0:
+            true_neg += 1
+        elif y[i] == 0 and pred_y[i] == 1:
+            false_pos += 1
+    sensitivity = true_pos/positives
+    specificity = true_neg/negatives
+    accuracy = 1-float(error_count/len(y))
+    precision = true_pos/(true_pos+false_pos)
+    f1_measure = (2*precision*sensitivity)/(precision+sensitivity)
+    return sensitivity,specificity, accuracy, precision, f1_measure
+
+def cross_val(theta,DATA,k):
+    np.random.shuffle(DATA)
+    scores = np.split(DATA,k)
+    accuracies = []
+
+    for i in range(len(scores)):
+        if i == 0:
+            testing_data = scores[0]
+            training_data = DATA[k:,:]
+        elif i == len(scores) - 1:
+            m = len(DATA)-k
+            testing_data = scores[len(scores)-1]
+            training_data = DATA[:m,:]
+        else:
+            fpi = (i+1)*k
+            spi = (i+2)*k
+            first_part = DATA[:fpi,:]
+            second_part = DATA[spi:,:]
+            testing_data = scores[i]
+            training_data = np.vstack((first_part,second_part))
+        testing_x = testing_data[:,:6]
+        testing_y = testing_data[:,6]
+        training_x = training_data[:,:6]
+        training_y = training_data[:,6]
+        new_theta,cost_history = train(theta,training_x,training_y,20000,0.0001)
+        accuracies.append(score(new_theta,testing_x,testing_y))
+    """
+    scores = []
+    original_theta = theta
+    for i in range(k):
+        np.random.shuffle(DATA)
+        training_x = DATA[:81,:6]
+        training_y = DATA[:81,6]
+        testing_x = DATA[81:,:6]
+        testing_y = DATA[81:,6]
+        theta,cost_history = train(original_theta,training_x,training_y,20000,0.0003)
+        print(type(theta))
+        scores.append(score(theta,testing_x,testing_y))"""
+    return accuracies
 iterations = 20000
 training_x = DATA[:75,:6]
 training_y = DATA[:75,6]
 testing_x = DATA[75:,:6]
 testing_y = DATA[75:,6]
+og_theta = theta
 theta,cost_history = train(theta,training_x,training_y,iterations,0.0001)
 
 x = np.zeros((iterations,1))
@@ -76,7 +141,7 @@ for i in range(iterations):
 plt.title("Cost function")
 plt.plot(x,cost_history)
 plt.show()
-print("Testing Accuracy: ",score(theta,testing_x,testing_y))
+print("Evaluation scores: ",score(theta,testing_x,testing_y))
 zero = []
 one = []
 for i in range(len(testing_x)):
@@ -94,3 +159,6 @@ plt.axhline(y=0.5,color="r",linestyle='-')
 plt.scatter(plot_x[:len(zero)],zero)
 plt.scatter(plot_x[len(zero):],one)
 plt.show()
+scores = cross_val(og_theta,DATA,10)
+res = sum(i[0] for i in scores)/10, sum(i[1] for i in scores)/10,sum(i[2] for i in scores)/10, sum(i[3] for i in scores)/10, sum(i[4] for i in scores)/10
+print("Eval Scores: ",res)
