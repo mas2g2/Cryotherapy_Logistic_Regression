@@ -1,7 +1,7 @@
 # Cryotherapy_Logistic_Regression
 
-Sensitivity: 68.29%
-Specificity: 80.14%
+Sensitivity: 69.75%
+Specificity: 80.07%
 Accuracy : 73.34%
-Precision: 78.83%
-F1 Measure: 70.95%
+AUC: 77.22%
+F1 Measure: 72.08%
