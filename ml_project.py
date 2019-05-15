@@ -27,18 +27,18 @@ def sigmoid(x):
 def g_x(theta,x):
     return np.dot(x,theta.transpose())
 
-
+# Calculates error using cost function
 def cost(theta,x,y):
     m = len(training_x)
     total_cost =-(1/m)*np.sum(y*np.log(sigmoid(g_x(theta,x)))+(1-y)*np.log(1-sigmoid(g_x(theta,x))))
     return total_cost
 
-
+# CAlculates gradient descent for updating the weights to minimize the error
 def grad_desc(theta,x,y):
     m = len(x)
     return (1/m)*np.dot(x.transpose(),sigmoid(g_x(theta,x))-y)
 
-
+# TRains model
 def train(theta,x,y,iterations,learning_rate):
     print("Training model ...");
     cost_history = []
@@ -52,6 +52,11 @@ def train(theta,x,y,iterations,learning_rate):
     cost_history = np.array(cost_history)
     return theta,cost_history
 
+# Import roc_auc_score function to calculate area under the curve
+from sklearn.metrics import roc_auc_score
+
+# Calculates evaluation scores to evaluate the performance of the model
+# Calculates sensitivity, specificity, accuracy, auc, and f1 measure
 def score(theta,x,y):
     error_count = 0
     pred_y = sigmoid(g_x(theta,x))
@@ -86,8 +91,10 @@ def score(theta,x,y):
     accuracy = 1-float(error_count/len(y))
     precision = true_pos/(true_pos+false_pos)
     f1_measure = (2*precision*sensitivity)/(precision+sensitivity)
-    return sensitivity,specificity, accuracy, precision, f1_measure
+    auc = roc_auc_score(y,pred_y)
+    return sensitivity,specificity, accuracy, auc, f1_measure
 
+# Cross validation function for evaluating model
 def cross_val(theta,DATA,k):
     np.random.shuffle(DATA)
     scores = np.split(DATA,k)
@@ -114,19 +121,8 @@ def cross_val(theta,DATA,k):
         training_y = training_data[:,6]
         new_theta,cost_history = train(theta,training_x,training_y,20000,0.0001)
         accuracies.append(score(new_theta,testing_x,testing_y))
-    """
-    scores = []
-    original_theta = theta
-    for i in range(k):
-        np.random.shuffle(DATA)
-        training_x = DATA[:81,:6]
-        training_y = DATA[:81,6]
-        testing_x = DATA[81:,:6]
-        testing_y = DATA[81:,6]
-        theta,cost_history = train(original_theta,training_x,training_y,20000,0.0003)
-        print(type(theta))
-        scores.append(score(theta,testing_x,testing_y))"""
     return accuracies
+
 iterations = 20000
 training_x = DATA[:75,:6]
 training_y = DATA[:75,6]
